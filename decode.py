@@ -90,14 +90,13 @@ class Archive():
         f.close()
 
         pos = 0
-        for i in range(len(self.fileList)):
-            name = self.fileList[i]
-            fileIndex = self.getFileIndex(name)
-
+        for fileIndex in range(len(self.fileList)):
             cmpSize = dword(self.metadata, fileIndex * 16 + 4)
             offset = dword(self.metadata, fileIndex * 16 + 8)
+            filenameOffset = dword(self.metadata, fileIndex * 16 + 12)
             decData = zlib.decompress(cmpData[offset + 8 : offset + cmpSize]) 
 
+            name = nullTerminatedString(self.rawFileList, filenameOffset)
             filename = folder + '/' + name.replace('\\', '/')
             os.makedirs(os.path.dirname(filename), exist_ok=True)
 
