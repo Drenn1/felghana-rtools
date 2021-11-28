@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Dump files from the game into a directory
 
-import os, zlib
+import os, zlib, binascii
 
 def debug(s):
     print(s)
@@ -20,7 +20,7 @@ def nullTerminatedString(data, offset):
     s = bytearray()
     while True:
         if data[offset] == 0:
-            return s.decode()
+            return s.decode('shift-jis')
         s.append(data[offset])
         offset += 1
 
@@ -57,21 +57,29 @@ class Archive():
 
         self.metadata = filedata1 = decrypt(bytearray(indexData[0x10 : data1End]))
         self.rawFileList = decrypt(bytearray(indexData[data1End : data1End + size2]))
-        self.fileList = [s.decode() for s in self.rawFileList.split(b'\x00')]
-        while len(self.fileList[-1]) == 0:
-            self.fileList = self.fileList[:-1]
+        f = open('rawFileList', 'wb')
+        f.write(self.rawFileList)
+        f.close()
+        self.fileList = []
+        for s in self.rawFileList.split(b'\x00')[:-1]:
+            ds = s.decode('shift-jis')
+            if any(b >= 0x80 for b in s):
+                print('SHIFT-JIS encoding: ' + ds)
+            self.fileList.append(ds)
+
+        assert(blocks == len(self.fileList))
 
         debug('GOT FILE LIST')
 
-        f = open('metadata', 'wb')
-        f.write(self.metadata)
-        f.close()
-        data2 = decrypt(bytearray(indexData[data1End : data1End + size2]))
-        f = open('fileList', 'w')
-        f.write('\n'.join(self.fileList))
-        f.close()
-
-        debug('WROTE FILES')
+        # For debugging
+        #f = open('metadata', 'wb')
+        #f.write(self.metadata)
+        #f.close()
+        #data2 = decrypt(bytearray(indexData[data1End : data1End + size2]))
+        #f = open('fileList', 'w')
+        #f.write('\n'.join(self.fileList))
+        #f.close()
+        #debug('WROTE FILES')
 
     def getFileIndex(self, filename):
         h = hashFilename(filename)
@@ -94,21 +102,25 @@ class Archive():
         pos = 0
         for fileIndex in range(len(self.fileList)):
             cmpSize = dword(self.metadata, fileIndex * 16 + 4)
-            offset = dword(self.metadata, fileIndex * 16 + 8)
             filenameOffset = dword(self.metadata, fileIndex * 16 + 12)
-            decData = zlib.decompress(cmpData[offset + 8 : offset + cmpSize]) 
-
             name = nullTerminatedString(self.rawFileList, filenameOffset)
-            filename = folder + '/' + name.replace('\\', '/')
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
 
-            f = open(filename, 'wb')
-            f.write(decData)
-            f.close()
+            try:
+                dataOffset = dword(self.metadata, fileIndex * 16 + 8)
+                decData = zlib.decompress(cmpData[dataOffset + 8 : dataOffset + cmpSize])
+                filename = folder + '/' + name.replace('\\', '/')
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+                f = open(filename, 'wb')
+                f.write(decData)
+                f.close()
+            except Exception as e:
+                print('Exception for file #' + str(fileIndex) + ' (' + name + '):')
+                print(e)
 
 
 #data_file = 'files/data_us'
-data_file = '/home/matthew/hdd/.steam/steamapps/common/Ys The Oath in Felghana/release/2020_data/data_us'
+data_file = '/home/matthew/hdd/.steam/steamapps/common/Ys The Oath in Felghana/release/2020_data/data'
 
 archive = Archive(data_file)
-archive.dumpAll('dump_2020')
+archive.dumpAll('dump_main_2020')

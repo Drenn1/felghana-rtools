@@ -61,7 +61,7 @@ class Archive:
         fileListBlob = bytearray()
         for fileStruct in self.fileList:
             fileStruct.rawStringOffset = len(fileListBlob)
-            fileListBlob.extend(fileStruct.filename.encode())
+            fileListBlob.extend(fileStruct.filename.encode('shift-jis'))
             fileListBlob.append(0)
 
         metadataBlob = bytearray()
@@ -69,12 +69,12 @@ class Archive:
             metadataBlob.extend(struct.pack('<IIII', fileStruct.nameHash, len(fileStruct.cmpData) + 8, fileStruct.cmpDataOffset, fileStruct.rawStringOffset))
 
         # For debugging
-        f = open('metadata', 'wb')
-        f.write(metadataBlob)
-        f.close()
-        f = open('fileList', 'wb')
-        f.write(fileListBlob)
-        f.close()
+        #f = open('metadata', 'wb')
+        #f.write(metadataBlob)
+        #f.close()
+        #f = open('fileList', 'wb')
+        #f.write(fileListBlob)
+        #f.close()
 
         fileListBlob = encrypt(fileListBlob)
         metadataBlob = encrypt(metadataBlob)
@@ -103,4 +103,4 @@ def packageDirectory(directory, outputName):
 
     archive.save(outputName)
 
-packageDirectory('dump_2018', 'new')
+packageDirectory('staging', 'data_us')
