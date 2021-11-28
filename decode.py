@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Dump files from the game into a directory
+
 import os, zlib
 
 def debug(s):
