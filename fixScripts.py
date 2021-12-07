@@ -170,5 +170,5 @@ def convertAllVoiceLines():
 
 convertAllVoiceLines()
 
-#analyzeScript('staging/MAP/S_62/S_6298/GOOD_BY.XSO.Z')
-#analyzeScriptPair('MAP/S_01/S_0170/TALKHUGO.XSO.Z')
+#analyzeScript('staging/MAP/S_01/S_0170/TALKHYUGO.XSO.Z')
+#analyzeScriptPair('MAP/S_02/S_0200/TALKHYUGO.XSO.Z')
